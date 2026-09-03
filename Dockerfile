@@ -1,6 +1,6 @@
  FROM php:8.2-fpm
 
-# Installation des dépendances système (y compris gettext-base pour envsubst)
+# Installation des dépendances système
 RUN apt-get update && apt-get install -y \
     nginx \
     git \
@@ -10,7 +10,6 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
-    gettext-base \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
@@ -25,13 +24,13 @@ COPY . .
 # Installation des dépendances Composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Permissions pour Laravel
+# Permissions pour le stockage Laravel
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# Configuration modèle Nginx
+# Configuration Nginx
 RUN echo 'server {\n\
-    listen ${PORT};\n\
+    listen PORT_PLACEHOLDER;\n\
     index index.php index.html;\n\
     root /var/www/public;\n\
     location / {\n\
@@ -43,13 +42,7 @@ RUN echo 'server {\n\
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
         include fastcgi_params;\n\
     }\n\
-}' > /etc/nginx/sites-available/default.template
+}' > /etc/nginx/sites-available/default
 
-# Script de démarrage avec fallback port 8080
-RUN echo '#!/bin/sh\n\
-export PORT="${PORT:-8080}"\n\
-envsubst "\$PORT" < /etc/nginx/sites-available/default.template > /etc/nginx/sites-available/default\n\
-php-fpm -D\n\
-exec nginx -g "daemon off;"' > /entrypoint.sh && chmod +x /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
+# Démarrage : remplacement du port via sed, lancement de php-fpm puis Nginx
+CMD sed -i "s/PORT_PLACEHOLDER/${PORT:-8080}/g" /etc/nginx/sites-available/default && php-fpm -D && nginx -g "daemon off;"

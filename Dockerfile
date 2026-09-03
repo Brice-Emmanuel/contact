@@ -24,7 +24,7 @@ COPY . .
 # Installation des dépendances Composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Permissions pour le stockage Laravel
+# Permissions pour le stockage et les caches
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
@@ -44,5 +44,5 @@ RUN echo 'server {\n\
     }\n\
 }' > /etc/nginx/sites-available/default
 
-# Démarrage : remplacement du port via sed, lancement de php-fpm puis Nginx
+# Démarrage direct : replacement du port via sed, démarrage de php-fpm puis lancement de Nginx
 CMD sed -i "s/PORT_PLACEHOLDER/${PORT:-8080}/g" /etc/nginx/sites-available/default && php-fpm -D && nginx -g "daemon off;"

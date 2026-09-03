@@ -13,15 +13,13 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
-    // La racine redirige vers la page de connexion
     Route::get('/', [AuthController::class, 'showLoginForm']);
 
-    // Route nommée unique pour la connexion
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'loginWeb']);
+    Route::post('/login', [AuthController::class, 'loginWeb'])->name('login.post');
 
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'registerWeb']);
+    Route::post('/register', [AuthController::class, 'registerWeb'])->name('register.post');
 
     Route::get('/forgot-password', [AuthController::class, 'showForgotForm'])->name('password.request');
     Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');

@@ -1,4 +1,4 @@
-<?php
+ <?php
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
@@ -13,8 +13,12 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
-    Route::get('/', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/', [AuthController::class, 'loginWeb']);
+    // La racine redirige vers la page de connexion
+    Route::get('/', [AuthController::class, 'showLoginForm']);
+
+    // Route nommée unique pour la connexion
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'loginWeb']);
 
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [AuthController::class, 'registerWeb']);
@@ -64,7 +68,7 @@ Route::middleware('auth')->group(function () {
         */
         Route::prefix('contacts')->name('contacts.')->group(function () {
 
-            // 1. Actions spécifiques (impérativement AVANT les routes avec paramètre dynamique {contact})
+            // 1. Actions spécifiques
             Route::get('favoris', [ContactController::class, 'favoris'])->name('favoris');
             Route::get('trashed', [ContactController::class, 'trashed'])->name('trashed');
             Route::get('stats', [ContactController::class, 'stats'])->name('stats');
@@ -83,12 +87,12 @@ Route::middleware('auth')->group(function () {
             Route::delete('{id}/force-delete', [ContactController::class, 'forceDelete'])->name('force-delete');
         });
 
-        // 3. Soumission avec contrôle du quota de contacts
+        // 3. Soumission avec contrôle du quota
         Route::post('/contacts', [ContactController::class, 'store'])
             ->middleware(CheckContactLimit::class)
             ->name('contacts.store');
 
-        // 4. Resource du CRUD principal (index, create, show, edit, update, destroy)
+        // 4. Resource du CRUD principal
         Route::resource('contacts', ContactController::class)->except(['store']);
     });
 });

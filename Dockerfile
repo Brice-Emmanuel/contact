@@ -1,4 +1,4 @@
- FROM php:8.2-fpm
+FROM php:8.2-fpm
 
 # Installation des dépendances système
 RUN apt-get update && apt-get install -y \
@@ -28,7 +28,7 @@ RUN composer install --no-dev --optimize-autoloader
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# Configuration Nginx
+# Configuration modèle Nginx
 RUN echo 'server {\n\
     listen PORT_PLACEHOLDER;\n\
     index index.php index.html;\n\
@@ -44,5 +44,5 @@ RUN echo 'server {\n\
     }\n\
 }' > /etc/nginx/sites-available/default
 
-# Démarrage direct : replacement du port via sed, démarrage de php-fpm puis lancement de Nginx
+# Démarrage direct : remplacement du port via sed, démarrage de php-fpm puis Nginx
 CMD sed -i "s/PORT_PLACEHOLDER/${PORT:-8080}/g" /etc/nginx/sites-available/default && php-fpm -D && nginx -g "daemon off;"

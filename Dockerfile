@@ -1,4 +1,4 @@
- FROM php:8.2-fpm
+FROM php:8.2-fpm
 
 RUN apt-get update && apt-get install -y \
     nginx \
@@ -25,9 +25,12 @@ RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
 COPY nginx.conf /etc/nginx/sites-available/default
+COPY entrypoint.sh /var/www/entrypoint.sh
 
-# Rendre le script d'entrée exécutable
-RUN chmod +x /var/www/entrypoint.sh
+# Conversion des fin de lignes (CRLF -> LF) et attribution des droits d'exécution
+RUN apt-get update && apt-get install -y dos2unix \
+    && dos2unix /var/www/entrypoint.sh \
+    && chmod +x /var/www/entrypoint.sh
 
 EXPOSE 8080
 

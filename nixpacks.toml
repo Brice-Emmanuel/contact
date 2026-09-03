@@ -1,5 +1,5 @@
 [phases.setup]
-nixPkgs = ['php82', 'php82Extensions.pdo_mysql', 'php82Extensions.mbstring', 'composer', 'nodejs', 'nginx']
+nixPkgs = ['php82', 'composer', 'nodejs_20']
 
 [phases.build]
 cmds = [
@@ -9,4 +9,4 @@ cmds = [
 ]
 
 [start]
-cmd = 'vendor/bin/heroku-php-nginx public/'
+cmd = 'php artisan serve --host=0.0.0.0 --port=$PORT'

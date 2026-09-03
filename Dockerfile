@@ -1,6 +1,6 @@
-FROM php:8.2-fpm
+ FROM php:8.2-fpm
 
-# Installation des dépendances système et des extensions PHP nécessaires
+# Installation des dépendances système et des extensions PHP
 RUN apt-get update && apt-get install -y \
     nginx \
     git \
@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     zip \
-    unzip
+    unzip \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
@@ -23,25 +24,31 @@ COPY . .
 # Installation des dépendances Composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Permissions pour le stockage Laravel
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+# Permissions pour Laravel
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
 
-# Configuration Nginx
+# Configuration Nginx avec variable $PORT pour Railway
 RUN echo 'server {\n\
-    listen 80;\n\
+    listen ${PORT};\n\
     index index.php index.html;\n\
     root /var/www/public;\n\
     location / {\n\
         try_files $uri $uri/ /index.php?$query_string;\n\
     }\n\
-    location ~ \.php$ {\n\
+    location ~ \\.php$ {\n\
         fastcgi_pass 127.0.0.1:9000;\n\
         fastcgi_index index.php;\n\
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
         include fastcgi_params;\n\
     }\n\
-}' > /etc/nginx/sites-available/default
+}' > /etc/nginx/sites-available/default.template
 
-EXPOSE 80
+# Script d'initialisation au démarrage
+RUN echo '#!/bin/sh\n\
+export PORT="${PORT:-8080}"\n\
+envsubst "\$PORT" < /etc/nginx/sites-available/default.template > /etc/nginx/sites-available/default\n\
+php-fpm -D\n\
+nginx -g "daemon off;"' > /entrypoint.sh && chmod +x /entrypoint.sh
 
-CMD php-fpm -D && nginx -g 'daemon off;'
+ENTRYPOINT ["/entrypoint.sh"]

@@ -1,9 +1,8 @@
- <?php
+<?php
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\SubscriptionController;
 use App\Http\Middleware\CheckContactLimit;
 use Illuminate\Support\Facades\Route;
 
@@ -13,14 +12,18 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
-    Route::get('/', [AuthController::class, 'showLoginForm']);
+    // Redirection de la racine vers /login
+    Route::redirect('/', '/login');
 
+    // Une SEULE route nommée 'login' (méthode GET)
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'loginWeb'])->name('login.post');
+    Route::post('/login', [AuthController::class, 'loginWeb']);
 
+    // Inscription
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'registerWeb'])->name('register.post');
+    Route::post('/register', [AuthController::class, 'registerWeb']);
 
+    // Mot de passe oublié
     Route::get('/forgot-password', [AuthController::class, 'showForgotForm'])->name('password.request');
     Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
     Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
@@ -29,16 +32,11 @@ Route::middleware('guest')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Redirections de courtoisie
+| Redirections & Authentification
 |--------------------------------------------------------------------------
 */
 Route::redirect('/home', '/dashboard');
 
-/*
-|--------------------------------------------------------------------------
-| Routes Protégées (Authentification requise)
-|--------------------------------------------------------------------------
-*/
 Route::middleware('auth')->group(function () {
 
     // Vérification de l'email
@@ -66,7 +64,7 @@ Route::middleware('auth')->group(function () {
         */
         Route::prefix('contacts')->name('contacts.')->group(function () {
 
-            // 1. Actions spécifiques
+            // Actions spécifiques
             Route::get('favoris', [ContactController::class, 'favoris'])->name('favoris');
             Route::get('trashed', [ContactController::class, 'trashed'])->name('trashed');
             Route::get('stats', [ContactController::class, 'stats'])->name('stats');
@@ -79,18 +77,18 @@ Route::middleware('auth')->group(function () {
                 Route::get('prochains', [ContactController::class, 'prochainsAnniversaires'])->name('prochains');
             });
 
-            // 2. Actions sur un contact spécifique
+            // Actions sur un contact spécifique
             Route::post('{id}/toggle-favori', [ContactController::class, 'toggleFavori'])->name('toggle-favori');
             Route::post('{id}/restore', [ContactController::class, 'restore'])->name('restore');
             Route::delete('{id}/force-delete', [ContactController::class, 'forceDelete'])->name('force-delete');
         });
 
-        // 3. Soumission avec contrôle du quota
+        // Soumission avec contrôle du quota
         Route::post('/contacts', [ContactController::class, 'store'])
             ->middleware(CheckContactLimit::class)
             ->name('contacts.store');
 
-        // 4. Resource du CRUD principal
+        // Resource du CRUD principal
         Route::resource('contacts', ContactController::class)->except(['store']);
     });
 });
